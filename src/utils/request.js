@@ -2,6 +2,7 @@ import axios from 'axios'
 import { Message } from 'element-ui'
 import store from '@/store'
 import { getToken } from '@/utils/auth'
+import qs from 'qs'
 
 // create an axios instance
 const service = axios.create({
@@ -15,6 +16,8 @@ service.interceptors.request.use(config => {
   if (store.getters.token) {
     config.headers['X-Token'] = getToken() // 让每个请求携带token-- ['X-Token']为自定义key 请根据实际情况自行修改
   }
+  config.data = qs.stringify(config.data)
+  config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
   return config
 }, error => {
   // Do something with request error
