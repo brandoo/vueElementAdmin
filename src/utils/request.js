@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
-import store from '@/store'
+// import store from '@/store'
 import { getToken } from '@/utils/auth'
 import qs from 'qs'
 
@@ -13,9 +13,11 @@ const service = axios.create({
 // request interceptor
 service.interceptors.request.use(config => {
   // Do something before request is sent
-  if (store.getters.token) {
-    config.headers['X-Token'] = getToken() // 让每个请求携带token-- ['X-Token']为自定义key 请根据实际情况自行修改
-  }
+  // if (store.getters.token) {
+  //   config.headers['authorization'] = getToken() // 让每个请求携带token-- ['X-Token']为自定义key 请根据实际情况自行修改
+  // }
+  config.headers['authorization'] = getToken() || '0' // 这里给一个值
+  // 参数在这里需要经过处理才行
   config.data = qs.stringify(config.data)
   config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
   return config
@@ -27,7 +29,7 @@ service.interceptors.request.use(config => {
 
 // respone interceptor
 service.interceptors.response.use(
-  response => response,
+  response => response.data,
   /**
   * 下面的注释为通过response自定义code来标示请求状态，当code返回如下情况为权限有问题，登出并返回到登录页
   * 如通过xmlhttprequest 状态码标识 逻辑可写在下面error中

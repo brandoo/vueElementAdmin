@@ -1,9 +1,10 @@
-import router from './router'
+import router from './router/index'
 import store from './store'
 import { Message } from 'element-ui'
 import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css'// progress bar style
-import { getToken } from '@/utils/auth' // getToken from cookie
+import { getToken, checkToken } from '@/utils/auth'
+import { MessageBox } from 'element-ui' // getToken from cookie
 
 NProgress.configure({ showSpinner: false })// NProgress Configuration
 
@@ -24,9 +25,21 @@ router.beforeEach((to, from, next) => {
       next({ path: '/' })
       NProgress.done() // if current page is dashboard will not trigger	afterEach hook, so manually handle it
     } else {
+      if (!checkToken(getToken())) {
+        MessageBox.confirm('token过期，你已被登出，请重新登录', '确定登出', {
+          confirmButtonText: '重新登录',
+          type: 'warning'
+        }).then(() => {
+          store.dispatch('FedLogOut').then(() => {
+            location.reload() // 为了重新实例化vue-router对象 避免bug
+          })
+        })
+      }
+
       if (store.getters.roles.length === 0) { // 判断当前用户是否已拉取完user_info信息
         store.dispatch('GetUserInfo').then(res => { // 拉取user_info
-          const roles = res.data.roles // note: roles must be a array! such as: ['editor','develop']
+          let roles = res.data.roles // note: roles must be a array! such as: ['editor','develop']
+          roles = roles.split(',')
           store.dispatch('GenerateRoutes', { roles }).then(() => { // 根据roles权限生成可访问的路由表
             router.addRoutes(store.getters.addRouters) // 动态添加可访问路由表
             next({ ...to, replace: true }) // hack方法 确保addRoutes已完成 ,set the replace: true so the navigation will not leave a history record
